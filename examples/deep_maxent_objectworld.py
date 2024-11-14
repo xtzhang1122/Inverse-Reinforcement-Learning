@@ -4,11 +4,18 @@ Run maximum entropy inverse reinforcement learning on the objectworld MDP.
 Matthew Alger, 2015
 matthew.alger@anu.edu.au
 """
+import sys
+import os
+import torch
+
+# Add the parent directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-import irl.deep_maxent as deep_maxent
+# import irl.deep_maxent as deep_maxent
+import irl.deep_maxnet_pytorch as deep_maxnet_pt
 import irl.mdp.objectworld as objectworld
 from irl.value_iteration import find_policy
 
@@ -45,10 +52,17 @@ def main(grid_size, discount, n_objects, n_colours, n_trajectories, epochs,
                                             trajectory_length,
                                             lambda s: policy[s])
     feature_matrix = ow.feature_matrix(discrete=False)
-    r = deep_maxent.irl((feature_matrix.shape[1],) + structure, feature_matrix,
+    # Convert feature_matrix to a PyTorch tensor
+    feature_matrix = torch.tensor(feature_matrix, dtype=torch.float32)
+
+    # r = deep_maxent.irl((feature_matrix.shape[1],) + structure, feature_matrix,
+    #     ow.n_actions, discount, ow.transition_probability, trajectories, epochs,
+    #     learning_rate, l1=l1, l2=l2)
+
+    r = deep_maxnet_pt.irl((feature_matrix.shape[1],) + structure, feature_matrix,
         ow.n_actions, discount, ow.transition_probability, trajectories, epochs,
         learning_rate, l1=l1, l2=l2)
-
+    
     plt.subplot(1, 2, 1)
     plt.pcolor(ground_r.reshape((grid_size, grid_size)))
     plt.colorbar()
@@ -60,4 +74,4 @@ def main(grid_size, discount, n_objects, n_colours, n_trajectories, epochs,
     plt.show()
 
 if __name__ == '__main__':
-    main(10, 0.9, 15, 2, 20, 50, 0.01, (3, 3))
+    main(10, 0.9, 15, 2, 20, 50, 0.01, (3, 3, 1))

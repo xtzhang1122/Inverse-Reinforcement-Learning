@@ -86,11 +86,10 @@ def find_policy(n_states, n_actions, transition_probabilities, reward, discount,
     -> Action probabilities for each state or action int for each state
         (depending on stochasticity).
     """
-
     if v is None:
         v = optimal_value(n_states, n_actions, transition_probabilities, reward,
                           discount, threshold)
-
+    
     if stochastic:
         # Get Q using equation 9.2 from Ziebart's thesis.
         Q = np.zeros((n_states, n_actions))
