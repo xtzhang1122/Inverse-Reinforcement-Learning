@@ -117,21 +117,24 @@ def irl(structure, feature_matrix, n_actions, discount, transition_probability, 
 
     # Model initialization
     layers = []
-    input_dim = structure[0]
-    
-    for hidden_dim in structure[1:]:
-        layers.append(torch.nn.Linear(input_dim, hidden_dim))
-        input_dim = hidden_dim
-    layers.append(torch.nn.Sigmoid())
+    input_dim = feature_matrix.shape[1]
+    alpha = nn.Parameter(torch.randn(1, structure[-1]))
+    print(feature_matrix.shape)
+    layers.append(nn.Linear(structure[0], structure[1]))
+    layers.append(nn.Sigmoid())
+    layers.append(nn.Linear(structure[1], structure[2]))
+    layers.append(nn.Sigmoid())
     model = torch.nn.Sequential(*layers)
     model = initialize_weights(model, init_type='normal', mean=0.0, std=0.02)
 
-    optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    for e in range(epochs):
+    for _ in range(epochs):
         optimizer.zero_grad()
-        r = model(feature_matrix).view(-1)
-        r = (r - r.mean()) / r.std()
+        r = model(feature_matrix)
+        rewards = torch.matmul(alpha, r.t())
+        rewards = rewards.squeeze()
+        r = (rewards - rewards.mean()) / rewards.std()
 
         expected_svf = find_expected_svf(n_states, r, n_actions, discount, transition_probability, trajectories)
         svf = find_svf(n_states, trajectories)
@@ -139,6 +142,10 @@ def irl(structure, feature_matrix, n_actions, discount, transition_probability, 
         loss = torch.sum((svf - expected_svf) ** 2) + l1 * torch.sum(torch.abs(r)) + l2 * torch.sum(r ** 2)
         loss.backward()
         optimizer.step()
+        print(loss.item())
 
-    reward = model(feature_matrix).view(-1).detach()
-    return reward.numpy()
+    r = model(feature_matrix)
+    rewards = torch.matmul(alpha, r.t())
+    rewards = rewards.squeeze()
+    r = (rewards - rewards.mean()) / rewards.std()
+    return r.detach().numpy()

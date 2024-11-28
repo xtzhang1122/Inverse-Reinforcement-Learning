@@ -55,10 +55,6 @@ def main(grid_size, discount, n_objects, n_colours, n_trajectories, epochs,
     # Convert feature_matrix to a PyTorch tensor
     feature_matrix = torch.tensor(feature_matrix, dtype=torch.float32)
 
-    # r = deep_maxent.irl((feature_matrix.shape[1],) + structure, feature_matrix,
-    #     ow.n_actions, discount, ow.transition_probability, trajectories, epochs,
-    #     learning_rate, l1=l1, l2=l2)
-
     r = deep_maxnet_pt.irl((feature_matrix.shape[1],) + structure, feature_matrix,
         ow.n_actions, discount, ow.transition_probability, trajectories, epochs,
         learning_rate, l1=l1, l2=l2)
@@ -74,4 +70,7 @@ def main(grid_size, discount, n_objects, n_colours, n_trajectories, epochs,
     plt.show()
 
 if __name__ == '__main__':
-    main(10, 0.9, 15, 2, 20, 50, 0.01, (3, 3, 1))
+    random_seed = 0
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
+    main(10, 0.9, 15, 2, 20, 60, 0.05, (3, 3))
